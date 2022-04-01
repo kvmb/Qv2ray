@@ -20,19 +20,21 @@ QString RemoveInvalidFileName(QString fileName)
 };
 
 #define SELECTED_ROWS_INDEX                                                                                                                                              \
-    [&]() {                                                                                                                                                              \
-        const auto &__selection = connectionsTable->selectedItems();                                                                                                     \
+    [&]()                                                                                                                                                                \
+    {                                                                                                                                                                    \
+        const auto &__selection = this->connectionsTable->selectedItems();                                                                                               \
         QSet<int> rows;                                                                                                                                                  \
         for (const auto &selection : __selection)                                                                                                                        \
-            rows.insert(connectionsTable->row(selection));                                                                                                               \
+            rows.insert(this->connectionsTable->row(selection));                                                                                                         \
         return rows;                                                                                                                                                     \
     }()
 
 #define GET_SELECTED_CONNECTION_IDS(connectionIdList)                                                                                                                    \
-    [&]() {                                                                                                                                                              \
+    [&]()                                                                                                                                                                \
+    {                                                                                                                                                                    \
         QList<ConnectionId> _list;                                                                                                                                       \
         for (const auto &i : connectionIdList)                                                                                                                           \
-            _list.push_back(ConnectionId(connectionsTable->item(i, 0)->data(Qt::UserRole).toString()));                                                                  \
+            _list.push_back(ConnectionId(this->connectionsTable->item(i, 0)->data(Qt::UserRole).toString()));                                                            \
         return _list;                                                                                                                                                    \
     }()
 
@@ -131,7 +133,15 @@ void GroupManager::SaveCurrentGroup()
     const auto &[dns, fakedns] = dnsSettingsWidget->GetDNSObject();
     routing.overrideDNS = dnsSettingsGB->isChecked();
     routing.dns = dns.toJson();
-    routing.fakedns = fakedns.toJson();
+
+    QJsonArray pools;
+    for (const auto &pool : fakedns)
+    {
+        pools.append(pool.toJson());
+    }
+    QJsonObject fdns;
+    fdns.insert("pools", pools);
+    routing.fakedns = fdns;
 
     const auto routematrix = routeSettingsWidget->GetRouteConfig();
     routing.extraOptions.insert(RouteMatrixConfig::EXTRA_OPTIONS_ID, routematrix.toJson());
@@ -275,9 +285,7 @@ QvMessageBusSlotImpl(GroupManager)
 {
     switch (msg)
     {
-       
-        
-        
+
         MBUpdateColorSchemeDefaultImpl
     }
 }
@@ -373,7 +381,14 @@ void GroupManager::on_groupList_itemClicked(QListWidgetItem *item)
     const auto routeId = QvProfileManager->GetGroupRoutingId(currentGroupId);
     {
         const auto routingObject = QvProfileManager->GetRouting(routeId);
-        dnsSettingsWidget->SetDNSObject(V2RayDNSObject::fromJson(routingObject.dns), V2RayFakeDNSObject::fromJson(routingObject.fakedns));
+
+        QList<V2RayFakeDNSObject> pools;
+        for (const auto &pool : routingObject.fakedns["pools"].toArray())
+        {
+            pools.append(V2RayFakeDNSObject::fromJson(pool.toObject()));
+        }
+        dnsSettingsWidget->SetDNSObject(V2RayDNSObject::fromJson(routingObject.dns), pools);
+
         dnsSettingsGB->setChecked(routingObject.overrideDNS);
         //
         RouteMatrixConfig c;

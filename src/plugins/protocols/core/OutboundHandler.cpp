@@ -16,12 +16,10 @@ static QString SafeBase64Decode(QString string)
 using namespace Qv2rayPlugin;
 using namespace Qv2ray::Models;
 
-QString SerializeVLESS(const QString &name, const IOConnectionSettings &connection);
 QString SerializeVMess(const QString &name, const IOConnectionSettings &connection);
 QString SerializeSS(const QString &name, const IOConnectionSettings &connection);
 QString SerializeTrojan(const QString &name, const IOConnectionSettings &connection);
 
-std::optional<std::pair<QString, IOConnectionSettings>> DeserializeVLESS(const QString &link);
 std::optional<std::pair<QString, IOConnectionSettings>> DeserializeVMess(const QString &link);
 std::optional<std::pair<QString, IOConnectionSettings>> DeserializeSS(const QString &link);
 std::optional<std::pair<QString, IOConnectionSettings>> DeserializeOldVMess(const QString &link);
@@ -185,7 +183,7 @@ QString SerializeTrojan(const QString &name, const IOConnectionSettings &connect
     url.setScheme(u"trojan"_qs);
     url.setHost(connection.address);
     url.setPort(connection.port.from);
-    url.setUserInfo(connection.protocolSettings[u"password"_qs].toString());
+    url.setUserName(connection.protocolSettings[u"password"_qs].toString().toUtf8(), QUrl::DecodedMode);
 
     Qv2ray::Models::StreamSettingsObject stream;
     stream.loadJson(connection.streamSettings);
@@ -197,7 +195,7 @@ QString SerializeTrojan(const QString &name, const IOConnectionSettings &connect
     }
 
     url.setFragment(name);
-    return url.toString();
+    return url.toString(QUrl::ComponentFormattingOption::FullyEncoded);
 }
 
 std::optional<std::pair<QString, IOConnectionSettings>> DeserializeTrojan(const QString &link)
@@ -207,7 +205,7 @@ std::optional<std::pair<QString, IOConnectionSettings>> DeserializeTrojan(const 
     conn.address = url.host();
     conn.port = url.port();
     conn.protocol = u"trojan"_qs;
-    conn.protocolSettings.insert(u"password"_qs, url.userInfo());
+    conn.protocolSettings.insert(u"password"_qs, QUrl::fromPercentEncoding(url.userInfo().toUtf8()));
 
     QUrlQuery q{ url.query() };
     if (q.hasQueryItem(u"sni"_qs))

@@ -3,16 +3,20 @@
 #include "QvPlugin/Handlers/KernelHandler.hpp"
 
 class QProcess;
-class APIWorker;
 
-const inline KernelId v2ray_kernel_id{ u"v2ray_kernel"_qs };
+namespace V2RayPluginNamespace
+{
+    class APIWorker;
+}
 
-class V2RayKernel : public Qv2rayPlugin::Kernel::PluginKernel
+const inline KernelId v2ray_5_kernel_id{ u"v2ray5_kernel"_qs };
+
+class V2Ray5Kernel : public Qv2rayPlugin::Kernel::PluginKernel
 {
     Q_OBJECT
   public:
-    V2RayKernel();
-    ~V2RayKernel();
+    V2Ray5Kernel();
+    ~V2Ray5Kernel();
 
   public:
     virtual void SetConnectionSettings(const QMap<Qv2rayPlugin::Kernel::KernelOptionFlags, QVariant> &, const IOConnectionSettings &) override{};
@@ -22,7 +26,7 @@ class V2RayKernel : public Qv2rayPlugin::Kernel::PluginKernel
     virtual bool Stop() override;
     virtual KernelId GetKernelId() const override
     {
-        return v2ray_kernel_id;
+        return v2ray_5_kernel_id;
     }
 
   signals:
@@ -35,7 +39,7 @@ class V2RayKernel : public Qv2rayPlugin::Kernel::PluginKernel
 
   private:
     ProfileContent profile;
-    APIWorker *apiWorker;
+    V2RayPluginNamespace::APIWorker *apiWorker;
     QProcess *vProcess;
     bool apiEnabled;
     bool kernelStarted = false;

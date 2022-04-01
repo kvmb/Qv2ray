@@ -42,14 +42,16 @@ namespace Qv2ray::Models
             AUTOCONNECT_LAST_CONNECTED = 2
         };
         Bindable<LatencyTestEngineId> DefaultLatencyTestEngine;
+        Bindable<KernelId> DefaultKernelId;
         Bindable<AutoConnectBehavior> AutoConnectBehavior{ AUTOCONNECT_LAST_CONNECTED };
         Bindable<bool> QuietMode{ false };
         Bindable<ProfileId> AutoConnectProfileId;
         Bindable<ProfileId> LastConnectedId;
         Bindable<QString> GeoIPPath;
         Bindable<QString> GeoSitePath;
-        QJS_COMPARE(Qv2rayBehaviorConfig, DefaultLatencyTestEngine, AutoConnectBehavior, QuietMode, AutoConnectProfileId, LastConnectedId, GeoIPPath, GeoSitePath)
-        QJS_JSON(P(DefaultLatencyTestEngine, AutoConnectBehavior, QuietMode, AutoConnectProfileId, LastConnectedId, GeoIPPath, GeoSitePath))
+        QJS_COMPARE(Qv2rayBehaviorConfig, DefaultLatencyTestEngine, DefaultKernelId, AutoConnectBehavior, QuietMode, AutoConnectProfileId, LastConnectedId, GeoIPPath,
+                    GeoSitePath)
+        QJS_JSON(P(DefaultLatencyTestEngine, DefaultKernelId, AutoConnectBehavior, QuietMode, AutoConnectProfileId, LastConnectedId, GeoIPPath, GeoSitePath))
     };
 
     struct ProtocolInboundBase
@@ -91,7 +93,10 @@ namespace Qv2ray::Models
         {
             ProtocolInboundBase::Propagate(in);
             in.inboundSettings.protocolSettings[u"udp"_qs] = *EnableUDP;
-            in.inboundSettings.protocolSettings[u"ip"_qs] = *UDPLocalAddress;
+            if (!UDPLocalAddress->isEmpty())
+            {
+                in.inboundSettings.protocolSettings[u"ip"_qs] = *UDPLocalAddress;
+            }
         }
     };
 
